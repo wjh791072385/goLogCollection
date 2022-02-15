@@ -27,7 +27,7 @@ func InitKafka(address []string, chanSize int64) (err error) {
 	//初始化msg通道
 	MsgChan = make(chan *sarama.ProducerMessage, chanSize)
 
-	//持续读取消息
+	//持续读取消息,非main函数结束，不会导致goroutine退出
 	go sendMsg()
 
 	return nil

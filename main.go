@@ -63,7 +63,7 @@ func main() {
 }
 
 func run() (err error) {
-	//循环读取数据
+	//tail->kafka
 	for {
 		line, ok := <-tailfile.TailObj.Lines
 		if !ok {
