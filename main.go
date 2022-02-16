@@ -1,14 +1,11 @@
 package main
 
 import (
-	"fmt"
+	"goLogCollection/etcd"
 	"goLogCollection/kafka"
 	"goLogCollection/tailfile"
 	"log"
 	"os"
-	"time"
-
-	"github.com/Shopify/sarama"
 
 	"gopkg.in/ini.v1"
 )
@@ -17,12 +14,18 @@ import (
 type Config struct {
 	KafkaConfig   `ini:"kafka"`
 	CollectConfig `ini:"collect"`
+	EtcdConfig    `ini:"etcd"`
 }
 
 type KafkaConfig struct {
 	Address  string `ini:"address"`
 	Topic    string `ini:"topic"`
 	ChanSize int64  `ini:"chan_size"`
+}
+
+type EtcdConfig struct {
+	Address    string `ini:"address"`
+	CollectKey string `ini:"collect_key"`
 }
 
 type CollectConfig struct {
@@ -51,37 +54,25 @@ func main() {
 	}
 	log.Println("kafka init success")
 
-	err = tailfile.InitTail(globalConfig.CollectConfig.LogFilePath)
+	//初始化etcd, 从etcd中拉取日志收集配置项
+	err = etcd.InitEtcd([]string{globalConfig.EtcdConfig.Address})
+	if err != nil {
+		log.Println("fail init etcd", err)
+		return
+	}
+
+	allFilePath, err := etcd.GetConf(globalConfig.EtcdConfig.CollectKey)
+	if err != nil {
+		log.Println("fail get etcd_log_conf", err)
+		return
+	}
+
+	err = tailfile.InitTail(allFilePath)
 	if err != nil {
 		log.Println("fail init tail", err)
 		return
 	}
-	log.Println("tail init success")
 
-	//将日志发往kafka
-	run()
+	select {}
 
-}
-
-func run() (err error) {
-	//tail->kafka
-	for {
-		line, ok := <-tailfile.TailObj.Lines
-		if !ok {
-			log.Printf("tail file close reopen, filename:%s\n", tailfile.TailObj.Filename)
-			time.Sleep(time.Second) //读取出错等待一秒继续读
-			continue
-		}
-		//空行不发送
-		if len(line.Text) == 0 {
-			continue
-		}
-		fmt.Println("msg : ", line.Text)
-
-		//利用通道将同步代码改为异步,封装成kafka的msg信息发送
-		msg := &sarama.ProducerMessage{}
-		msg.Topic = "web_log"
-		msg.Value = sarama.StringEncoder(line.Text)
-		kafka.RecvMsg(msg)
-	}
 }
