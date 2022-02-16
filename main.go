@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"goLogCollection/kafka"
 	"goLogCollection/tailfile"
 	"log"
@@ -71,11 +72,16 @@ func run() (err error) {
 			time.Sleep(time.Second) //读取出错等待一秒继续读
 			continue
 		}
+		//空行不发送
+		if len(line.Text) == 0 {
+			continue
+		}
+		fmt.Println("msg : ", line.Text)
 
 		//利用通道将同步代码改为异步,封装成kafka的msg信息发送
 		msg := &sarama.ProducerMessage{}
 		msg.Topic = "web_log"
 		msg.Value = sarama.StringEncoder(line.Text)
-		kafka.MsgChan <- msg
+		kafka.RecvMsg(msg)
 	}
 }

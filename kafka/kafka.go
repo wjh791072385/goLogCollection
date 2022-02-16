@@ -1,6 +1,7 @@
 package kafka
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/Shopify/sarama"
@@ -8,7 +9,7 @@ import (
 
 var (
 	client  sarama.SyncProducer
-	MsgChan chan *sarama.ProducerMessage
+	msgChan chan *sarama.ProducerMessage
 )
 
 func InitKafka(address []string, chanSize int64) (err error) {
@@ -25,7 +26,7 @@ func InitKafka(address []string, chanSize int64) (err error) {
 	}
 
 	//初始化msg通道
-	MsgChan = make(chan *sarama.ProducerMessage, chanSize)
+	msgChan = make(chan *sarama.ProducerMessage, chanSize)
 
 	//持续读取消息,非main函数结束，不会导致goroutine退出
 	go sendMsg()
@@ -36,7 +37,7 @@ func InitKafka(address []string, chanSize int64) (err error) {
 func sendMsg() {
 	for {
 		select {
-		case msg := <-MsgChan:
+		case msg := <-msgChan:
 			pid, offset, err := client.SendMessage(msg)
 			if err != nil {
 				log.Println("send msg fail ", err)
@@ -44,4 +45,9 @@ func sendMsg() {
 			log.Println(pid, offset)
 		}
 	}
+}
+
+func RecvMsg(msg *sarama.ProducerMessage) {
+	msgChan <- msg
+	fmt.Println("send successfully")
 }
