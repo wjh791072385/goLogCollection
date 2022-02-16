@@ -24,6 +24,7 @@ func TestEtcdGetPut(t *testing.T) {
 	//put
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	jsonStr := "[{\"path\":\"/Users/wangjianhong/Desktop/go/goLogCollection/logTest/web_log.log\",\"topic\":\"web_log\"},{\"path\":\"/Users/wangjianhong/Desktop/go/goLogCollection/logTest/trash.log\",\"topic\":\"trash\"}]"
+	//jsonStr := "[{\"path\":\"/Users/wangjianhong/Desktop/go/goLogCollection/logTest/web_log.log\",\"topic\":\"web_log\"},{\"path\":\"/Users/wangjianhong/Desktop/go/goLogCollection/logTest/trash.log\",\"topic\":\"trash\"},{\"path\":\"/Users/wangjianhong/Desktop/go/goLogCollection/logTest/change.log\",\"topic\":\"change\"}]"
 	_, err = cli.Put(ctx, "collect_log_conf", jsonStr)
 	if err != nil {
 		t.Log("put error", err)
@@ -61,8 +62,8 @@ func TestWatch(t *testing.T) {
 
 	//watch监控key, 返回一个<-chan WatchResponse
 	wch := cli.Watch(context.Background(), "etcdTes")
-	for wresp := range wch {
-		for _, event := range wresp.Events {
+	for resp := range wch {
+		for _, event := range resp.Events {
 			t.Logf("Type: %s Key:%s Value:%s\n", event.Type, event.Kv.Key, event.Kv.Value)
 		}
 	}

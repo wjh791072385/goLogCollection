@@ -5,13 +5,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"goLogCollection/common"
+	"goLogCollection/tailfile"
 	"log"
 	"time"
 
 	"go.etcd.io/etcd/clientv3"
 )
 
-var cli *clientv3.Client
+var (
+	cli *clientv3.Client
+)
 
 func InitEtcd(address []string) (err error) {
 	cli, err = clientv3.New(clientv3.Config{
@@ -25,7 +28,7 @@ func InitEtcd(address []string) (err error) {
 	return nil
 }
 
-func GetConf(key string) (collectEntryList []common.CollectEntry, err error) {
+func GetLogConf(key string) (collectEntryList []common.CollectEntry, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	resp, err := cli.Get(ctx, key)
@@ -43,4 +46,26 @@ func GetConf(key string) (collectEntryList []common.CollectEntry, err error) {
 
 	err = json.Unmarshal(resp.Kvs[0].Value, &collectEntryList)
 	return
+}
+
+func WatchLogConf(key string) {
+	for {
+		wChan := cli.Watch(context.Background(), key)
+		var newConf []common.CollectEntry
+		for resp := range wChan {
+			for _, evt := range resp.Events {
+				//t.Logf("Type: %s Key:%s Value:%s\n", evt.Type, evt.Kv.Key, evt.Kv.Value)
+
+				//解析出value
+				err := json.Unmarshal(evt.Kv.Value, &newConf)
+				if err != nil {
+					log.Printf("json unmarshal failed %s\n", err)
+					continue
+				}
+
+				//告知tail模块根据配置改变而改变
+				tailfile.SendNewConf(newConf)
+			}
+		}
+	}
 }

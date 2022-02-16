@@ -40,7 +40,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	globalConfig := new(Config) //因为要传指针，所以采用new
+	//传指针用new
+	globalConfig := new(Config)
+
 	err = cfg.MapTo(globalConfig)
 	if err != nil {
 		log.Printf("Fail: %v", err)
@@ -61,12 +63,16 @@ func main() {
 		return
 	}
 
-	allFilePath, err := etcd.GetConf(globalConfig.EtcdConfig.CollectKey)
+	allFilePath, err := etcd.GetLogConf(globalConfig.EtcdConfig.CollectKey)
 	if err != nil {
 		log.Println("fail get etcd_log_conf", err)
 		return
 	}
 
+	//etcd监控配置文件
+	go etcd.WatchLogConf(globalConfig.EtcdConfig.CollectKey)
+
+	//读取配置文件对应log
 	err = tailfile.InitTail(allFilePath)
 	if err != nil {
 		log.Println("fail init tail", err)

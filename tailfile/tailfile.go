@@ -2,7 +2,6 @@ package tailfile
 
 import (
 	"fmt"
-	"goLogCollection/common"
 	"goLogCollection/kafka"
 	"log"
 	"time"
@@ -16,34 +15,6 @@ type tailTask struct {
 	path    string
 	topic   string
 	tailObj *tail.Tail
-}
-
-// InitTail 初始化若干log文件配置项
-func InitTail(allConf []common.CollectEntry) (err error) {
-	config := tail.Config{
-		ReOpen:    true,                                 // 重新打开
-		Follow:    true,                                 // 是否跟随
-		Location:  &tail.SeekInfo{Offset: 0, Whence: 2}, // 从文件的哪个地方开始读
-		MustExist: false,                                // 文件不存在不报错
-		Poll:      true,
-	}
-
-	for _, conf := range allConf {
-		tt := tailTask{
-			path:  conf.Path,
-			topic: conf.Topic,
-		}
-		tt.tailObj, err = tail.TailFile(conf.Path, config)
-		if err != nil {
-			log.Println("init tail failed ", err, conf.Path)
-			continue
-		}
-
-		//启动后台goroutine收集日志
-		go tt.run()
-	}
-
-	return nil
 }
 
 func (t *tailTask) run() (err error) {
@@ -68,4 +39,16 @@ func (t *tailTask) run() (err error) {
 		msg.Value = sarama.StringEncoder(line.Text)
 		kafka.RecvMsg(msg)
 	}
+}
+
+func (t *tailTask) Init() (err error) {
+	cfg := tail.Config{
+		ReOpen:    true,
+		Follow:    true,
+		Location:  &tail.SeekInfo{Offset: 0, Whence: 2},
+		MustExist: false,
+		Poll:      true,
+	}
+	t.tailObj, err = tail.TailFile(t.path, cfg)
+	return
 }
