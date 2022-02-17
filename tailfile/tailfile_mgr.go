@@ -24,18 +24,14 @@ func InitTail(allConf []common.CollectEntry) (err error) {
 	}
 
 	for _, conf := range allConf {
-		tt := tailTask{
-			path:  conf.Path,
-			topic: conf.Topic,
-		}
-
+		tt := NewTailTask(conf.Path, conf.Topic)
 		err = tt.Init()
 		if err != nil {
 			log.Println("tailTask init failed ", err)
 			continue
 		}
 		//添加到tailTaskMap中
-		ttMgr.tailTaskMap[tt.path] = &tt
+		ttMgr.tailTaskMap[tt.path] = tt
 
 		//启动后台goroutine收集日志
 		go tt.run()
@@ -46,32 +42,46 @@ func InitTail(allConf []common.CollectEntry) (err error) {
 }
 
 func (t *tailTaskMgr) watch() {
-	newConf := <-t.confChan
-	log.Println("get new conf from etcd ：", newConf)
+	for {
+		newConf := <-t.confChan
+		log.Println("get new conf from etcd ：", newConf)
 
-	//对新配置的增删改查
-	for _, conf := range newConf {
-		_, ok := t.tailTaskMap[conf.Path]
-		if ok {
-			continue
+		//对新配置的增删改查
+		for _, conf := range newConf {
+			_, ok := t.tailTaskMap[conf.Path]
+			if ok {
+				continue
+			}
+
+			//不存在则新建tailTask
+			tt := NewTailTask(conf.Path, conf.Topic)
+			err := tt.Init()
+			if err != nil {
+				log.Println("tailTask init failed ", err)
+				continue
+			}
+			//添加到tailTaskMap中
+			ttMgr.tailTaskMap[tt.path] = tt
+
+			//启动后台goroutine收集日志
+			go tt.run()
 		}
 
-		//不存在则新建tailTask
-		tt := tailTask{
-			path:  conf.Path,
-			topic: conf.Topic,
-		}
+		//将tailTaskMap中存在,但newConf中不存在的部分停止监测
+		for k, task := range ttMgr.tailTaskMap {
+			var flag bool
+			for _, conf := range newConf {
+				if k == conf.Path {
+					flag = true
+					break
+				}
+			}
 
-		err := tt.Init()
-		if err != nil {
-			log.Println("tailTask init failed ", err)
-			continue
+			//如果不存在，则停止对应的tailTask
+			if !flag {
+				task.cancel()
+			}
 		}
-		//添加到tailTaskMap中
-		ttMgr.tailTaskMap[tt.path] = &tt
-
-		//启动后台goroutine收集日志
-		go tt.run()
 	}
 }
 

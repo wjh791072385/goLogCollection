@@ -25,6 +25,7 @@ func TestEtcdGetPut(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	jsonStr := "[{\"path\":\"/Users/wangjianhong/Desktop/go/goLogCollection/logTest/web_log.log\",\"topic\":\"web_log\"},{\"path\":\"/Users/wangjianhong/Desktop/go/goLogCollection/logTest/trash.log\",\"topic\":\"trash\"}]"
 	//jsonStr := "[{\"path\":\"/Users/wangjianhong/Desktop/go/goLogCollection/logTest/web_log.log\",\"topic\":\"web_log\"},{\"path\":\"/Users/wangjianhong/Desktop/go/goLogCollection/logTest/trash.log\",\"topic\":\"trash\"},{\"path\":\"/Users/wangjianhong/Desktop/go/goLogCollection/logTest/change.log\",\"topic\":\"change\"}]"
+	//jsonStr := "[{\"path\":\"/Users/wangjianhong/Desktop/go/goLogCollection/logTest/web_log.log\",\"topic\":\"web_log\"},{\"path\":\"/Users/wangjianhong/Desktop/go/goLogCollection/logTest/trash.log\",\"topic\":\"trash\"},{\"path\":\"/Users/wangjianhong/Desktop/go/goLogCollection/logTest/change2.log\",\"topic\":\"change2\"}]"
 	_, err = cli.Put(ctx, "collect_log_conf", jsonStr)
 	if err != nil {
 		t.Log("put error", err)
