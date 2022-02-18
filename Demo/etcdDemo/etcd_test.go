@@ -70,3 +70,18 @@ func TestWatch(t *testing.T) {
 	}
 
 }
+
+func TestDelete(t *testing.T) {
+	cli, err := clientv3.New(clientv3.Config{
+		Endpoints:   []string{"127.0.0.1:2379"},
+		DialTimeout: 5 * time.Second,
+	})
+	if err != nil {
+		t.Logf("connect to etcd failed, err:%v\n", err)
+		return
+	}
+	t.Log("init success")
+	defer cli.Close()
+
+	cli.Delete(context.Background(), "collect_log_conf")
+}

@@ -51,12 +51,19 @@ func GetLogConf(key string) (collectEntryList []common.CollectEntry, err error) 
 func WatchLogConf(key string) {
 	for {
 		wChan := cli.Watch(context.Background(), key)
-		var newConf []common.CollectEntry
+
 		for resp := range wChan {
 			for _, evt := range resp.Events {
 				//t.Logf("Type: %s Key:%s Value:%s\n", evt.Type, evt.Kv.Key, evt.Kv.Value)
+				var newConf []common.CollectEntry
 
-				//解析出value
+				if evt.Type == clientv3.EventTypeDelete {
+					//如果执行的是删除key操作,发送空的newConf过去
+					tailfile.SendNewConf(newConf)
+					continue
+				}
+
+				//解析出value,前提是value不能为空
 				err := json.Unmarshal(evt.Kv.Value, &newConf)
 				if err != nil {
 					log.Printf("json unmarshal failed %s\n", err)

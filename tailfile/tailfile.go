@@ -36,8 +36,9 @@ func (t *tailTask) run() (err error) {
 	log.Printf("colloct for path %s is running", t.path)
 	for {
 		select {
-		case <-t.ctx.Done(): //当调用cancel方法时
+		case <-t.ctx.Done(): //当调用cancel方法时,结束进程并且结束停止tail监听文件
 			log.Printf("stop tailTask %s\n", t.path)
+			t.tailObj.Stop()
 			return
 		case line, ok := <-t.tailObj.Lines:
 			if !ok {
@@ -56,7 +57,6 @@ func (t *tailTask) run() (err error) {
 			msg.Topic = t.topic
 			msg.Value = sarama.StringEncoder(line.Text)
 			kafka.RecvMsg(msg)
-
 		}
 	}
 }

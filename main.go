@@ -62,6 +62,7 @@ func main() {
 		log.Println("fail init etcd", err)
 		return
 	}
+	log.Println("etcd init success")
 
 	allFilePath, err := etcd.GetLogConf(globalConfig.EtcdConfig.CollectKey)
 	if err != nil {

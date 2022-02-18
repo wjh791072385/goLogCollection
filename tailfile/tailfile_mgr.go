@@ -79,6 +79,7 @@ func (t *tailTaskMgr) watch() {
 
 			//如果不存在，则停止对应的tailTask
 			if !flag {
+				delete(ttMgr.tailTaskMap, k)
 				task.cancel()
 			}
 		}
