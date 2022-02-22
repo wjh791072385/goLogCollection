@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"goLogCollection/common"
 	"goLogCollection/etcd"
 	"goLogCollection/kafka"
 	"goLogCollection/tailfile"
@@ -64,14 +66,17 @@ func main() {
 	}
 	log.Println("etcd init success")
 
-	allFilePath, err := etcd.GetLogConf(globalConfig.EtcdConfig.CollectKey)
+	//配置信息加上ip保证唯一性
+	ip := common.GetPublicIP() + "_" + common.GetLocalIP()
+	collectKey := fmt.Sprintf(globalConfig.EtcdConfig.CollectKey, ip)
+	allFilePath, err := etcd.GetLogConf(collectKey)
 	if err != nil {
 		log.Println("fail get etcd_log_conf", err)
 		return
 	}
 
 	//etcd监控配置文件
-	go etcd.WatchLogConf(globalConfig.EtcdConfig.CollectKey)
+	go etcd.WatchLogConf(collectKey)
 
 	//读取配置文件对应log
 	err = tailfile.InitTail(allFilePath)

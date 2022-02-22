@@ -26,7 +26,7 @@ func TestEtcdGetPut(t *testing.T) {
 	jsonStr := "[{\"path\":\"/Users/wangjianhong/Desktop/go/goLogCollection/logTest/web_log.log\",\"topic\":\"web_log\"},{\"path\":\"/Users/wangjianhong/Desktop/go/goLogCollection/logTest/trash.log\",\"topic\":\"trash\"}]"
 	//jsonStr := "[{\"path\":\"/Users/wangjianhong/Desktop/go/goLogCollection/logTest/web_log.log\",\"topic\":\"web_log\"},{\"path\":\"/Users/wangjianhong/Desktop/go/goLogCollection/logTest/trash.log\",\"topic\":\"trash\"},{\"path\":\"/Users/wangjianhong/Desktop/go/goLogCollection/logTest/change.log\",\"topic\":\"change\"}]"
 	//jsonStr := "[{\"path\":\"/Users/wangjianhong/Desktop/go/goLogCollection/logTest/web_log.log\",\"topic\":\"web_log\"},{\"path\":\"/Users/wangjianhong/Desktop/go/goLogCollection/logTest/trash.log\",\"topic\":\"trash\"},{\"path\":\"/Users/wangjianhong/Desktop/go/goLogCollection/logTest/change2.log\",\"topic\":\"change2\"}]"
-	_, err = cli.Put(ctx, "collect_log_conf", jsonStr)
+	_, err = cli.Put(ctx, "collect_183.225.9.229_192.168.101.66_log_conf", jsonStr)
 	if err != nil {
 		t.Log("put error", err)
 		return
@@ -35,7 +35,7 @@ func TestEtcdGetPut(t *testing.T) {
 
 	//get
 	ctx, cancel = context.WithTimeout(context.Background(), time.Second)
-	resp, err := cli.Get(ctx, "collect_log_conf")
+	resp, err := cli.Get(ctx, "collect_183.225.9.229_192.168.101.66_log_conf")
 	cancel()
 	if err != nil {
 		t.Log("get error", err)
