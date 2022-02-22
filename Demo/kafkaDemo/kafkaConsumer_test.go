@@ -30,7 +30,7 @@ func TestKafkaConsumer(t *testing.T) {
 			fmt.Printf("failed to start consumer for partition %d,err:%v\n", partition, err)
 			return
 		}
-		defer pc.AsyncClose()
+		//defer pc.AsyncClose()
 		// 异步从每个分区消费信息
 		go func(sarama.PartitionConsumer) {
 			for msg := range pc.Messages() {
